@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin — Electroadib.ma</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0115;color:#fff;min-height:100vh}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#0a0115}::-webkit-scrollbar-thumb{background:#D4AF37;border-radius:2px}
+
+/* LAYOUT */
+.admin-layout{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#110220;border-right:1px solid rgba(212,175,55,.2);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:.3s}
+.sidebar.collapsed{width:0;overflow:hidden}
+.main{margin-left:240px;flex:1;transition:.3s}
+.main.full{margin-left:0}
+@media(max-width:768px){.sidebar{width:0}.main{margin-left:0}}
+@media(max-width:768px) .sidebar.mobile-open{width:260px;box-shadow:4px 0 20px rgba(0,0,0,.5)}
+
+/* SIDEBAR */
+.sidebar-logo{padding:20px 16px;border-bottom:1px solid rgba(212,175,55,.15)}
+.sidebar-logo img{height:32px;object-fit:contain;max-width:100%}
+.sidebar-logo .version{font-size:.65rem;color:rgba(212,175,55,.6);margin-top:6px;letter-spacing:.06em}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-section-label{font-size:.62rem;font-weight:700;color:rgba(212,175,55,.5);letter-spacing:.1em;text-transform:uppercase;padding:12px 16px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:.2s;font-size:.85rem;color:rgba(255,255,255,.7);border-left:2px solid transparent;white-space:nowrap}
+.nav-item:hover{background:rgba(212,175,55,.08);color:#fff}
+.nav-item.active{background:rgba(212,175,55,.12);color:#D4AF37;border-left-color:#D4AF37}
+.nav-item svg{flex-shrink:0;opacity:.7}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{padding:16px;border-top:1px solid rgba(212,175,55,.15)}
+.preview-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;background:linear-gradient(135deg,#D4AF37,#F0D060);color:#0a0115;font-size:.82rem;font-weight:700;cursor:pointer;border:none;width:100%;justify-content:center}
+.preview-btn:hover{opacity:.9}
+
+/* TOPBAR */
+.topbar{background:#110220;border-bottom:1px solid rgba(212,175,55,.15);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.menu-toggle{width:34px;height:34px;border-radius:6px;border:1px solid rgba(212,175,55,.2);background:transparent;color:#D4AF37;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.topbar-title{font-size:.95rem;font-weight:700;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.save-all-btn{display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-size:.82rem;font-weight:700;cursor:pointer;border:none;transition:.2s}
+.save-all-btn:hover{transform:translateY(-1px)}
+.toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:.85rem;font-weight:600;animation:toastIn .3s ease;display:none}
+.toast.success{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff}
+.toast.error{background:#C53030;color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+/* CONTENT */
+.content{padding:24px;max-width:900px}
+
+/* SECTION */
+.section-panel{display:none}
+.section-panel.active{display:block}
+.panel-header{margin-bottom:24px}
+.panel-header h2{font-size:1.3rem;font-weight:700;margin-bottom:4px}
+.panel-header p{font-size:.84rem;color:rgba(255,255,255,.55)}
+
+/* CARDS */
+.card{background:#110220;border:1px solid rgba(212,175,55,.15);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:.78rem;font-weight:700;color:#D4AF37;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.76rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:6px;letter-spacing:.03em}
+.form-input{width:100%;padding:10px 13px;background:rgba(255,255,255,.05);border:1.5px solid rgba(212,175,55,.2);border-radius:10px;color:#fff;font-size:.88rem;transition:.2s;outline:none}
+.form-input:focus{border-color:#D4AF37;background:rgba(212,175,55,.05)}
+.form-input::placeholder{color:rgba(255,255,255,.3)}
+select.form-input option{background:#110220;color:#fff}
+textarea.form-input{resize:vertical;min-height:80px;font-family:inherit}
+.form-help{font-size:.72rem;color:rgba(255,255,255,.35);margin-top:4px}
+
+/* PRODUCT LIST */
+.prod-list{display:flex;flex-direction:column;gap:10px}
+.prod-item{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.12);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+.prod-item-info{}
+.prod-item-brand{font-size:.65rem;font-weight:700;color:#D4AF37;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+.prod-item-name{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:4px}
+.prod-item-meta{font-size:.75rem;color:rgba(255,255,255,.5);display:flex;gap:10px;flex-wrap:wrap}
+.prod-item-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-edit{padding:6px 12px;border-radius:7px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.25);color:#D4AF37;font-size:.75rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-edit:hover{background:rgba(212,175,55,.22)}
+.btn-del{padding:6px 10px;border-radius:7px;background:rgba(197,48,48,.12);border:1px solid rgba(197,48,48,.25);color:#FC8181;font-size:.75rem;font-weight:600;cursor:pointer;transition:.2s}
+.btn-del:hover{background:rgba(197,48,48,.22)}
+.btn-add{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:10px;background:rgba(212,175,55,.1);border:1.5px dashed rgba(212,175,55,.3);color:#D4AF37;font-size:.83rem;font-weight:600;cursor:pointer;width:100%;justify-content:center;transition:.2s;margin-top:8px}
+.btn-add:hover{background:rgba(212,175,55,.18)}
+
+/* FAQ LIST */
+.faq-item-row{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.12);border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.faq-item-q{font-size:.87rem;font-weight:600;color:#fff;margin-bottom:4px}
+.faq-item-a{font-size:.8rem;color:rgba(255,255,255,.55);margin-bottom:10px;line-height:1.5}
+.faq-item-actions{display:flex;gap:6px}
+
+/* TESTI LIST */
+.testi-item-row{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.12);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+.testi-author-tag{font-size:.7rem;color:#D4AF37;font-weight:700;margin-bottom:4px}
+.testi-text-prev{font-size:.82rem;color:rgba(255,255,255,.7);font-style:italic;margin-bottom:2px}
+.testi-city-tag{font-size:.72rem;color:rgba(255,255,255,.45)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal-box{background:#110220;border:1px solid rgba(212,175,55,.25);border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-header h3{font-size:1rem;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.7);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(255,255,255,.15);color:#fff}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.btn-save{flex:2;padding:11px;border-radius:10px;background:linear-gradient(135deg,#D4AF37,#F0D060);color:#0a0115;font-size:.88rem;font-weight:700;cursor:pointer;border:none}
+.btn-cancel{flex:1;padding:11px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:.88rem;font-weight:600;cursor:pointer}
+
+/* STATUS BADGE */
+.status-bar{background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:.82rem;color:rgba(37,211,102,.9)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#25D366;animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* COLOR PREVIEW */
+.color-preview{width:24px;height:24px;border-radius:5px;border:1px solid rgba(255,255,255,.2);display:inline-block;vertical-align:middle;margin-right:6px}
+
+/* DRAG HANDLE */
+.drag-handle{cursor:grab;color:rgba(255,255,255,.25);flex-shrink:0}
+.drag-handle:active{cursor:grabbing}
+
+/* SWITCH */
+.switch{position:relative;display:inline-block;width:40px;height:22px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:rgba(255,255,255,.15);border-radius:22px;transition:.3s}
+.slider::before{content:'';position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked + .slider{background:#D4AF37}
+input:checked + .slider::before{transform:translateX(18px)}
+
+/* TEAM */
+.team-member-row{background:rgba(255,255,255,.03);border:1px solid rgba(212,175,55,.12);border-radius:10px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.member-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#D4AF37,#F0D060);display:flex;align-items:center;justify-content:center;font-weight:700;color:#0a0115;font-size:.88rem;flex-shrink:0;overflow:hidden}
+.member-av img{width:100%;height:100%;object-fit:cover}
+.member-info{flex:1}
+.member-name{font-size:.88rem;font-weight:700;color:#fff}
+.member-role{font-size:.74rem;color:#D4AF37}
+
+/* ═══ LOGIN SCREEN ═══ */
+.login-screen{position:fixed;inset:0;z-index:9999;background:#0a0115;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{width:100%;max-width:380px;background:#110220;border:1px solid rgba(212,175,55,.25);border-radius:20px;padding:36px 28px;position:relative;overflow:hidden}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#D4AF37,#F0D060,transparent)}
+.login-glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,55,.08),transparent 70%);pointer-events:none}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .brand{font-size:1.4rem;font-weight:800;color:#fff}
+.login-logo .brand span{color:#D4AF37}
+.login-logo .sub{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:.08em;text-transform:uppercase}
+.login-title{font-size:1rem;font-weight:700;text-align:center;margin-bottom:6px}
+.login-sub{font-size:.8rem;color:rgba(255,255,255,.45);text-align:center;margin-bottom:24px}
+.login-input-wrap{position:relative;margin-bottom:14px}
+.login-input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:rgba(212,175,55,.5)}
+.login-input{width:100%;padding:12px 13px 12px 40px;background:rgba(255,255,255,.05);border:1.5px solid rgba(212,175,55,.2);border-radius:12px;color:#fff;font-size:.9rem;outline:none;transition:.2s;font-family:inherit}
+.login-input:focus{border-color:#D4AF37;background:rgba(212,175,55,.05)}
+.login-input::placeholder{color:rgba(255,255,255,.3)}
+.login-input.error{border-color:#FC8181;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.login-btn{width:100%;padding:13px;border-radius:12px;background:linear-gradient(135deg,#D4AF37,#F0D060);color:#0a0115;font-size:.95rem;font-weight:800;cursor:pointer;border:none;margin-top:6px;transition:.2s;letter-spacing:.03em}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,175,55,.3)}
+.login-error{color:#FC8181;font-size:.8rem;text-align:center;margin-top:10px;display:none}
+.login-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.2);color:rgba(37,211,102,.9);padding:5px 12px;border-radius:100px;font-size:.7rem;font-weight:600;margin:0 auto 20px;display:flex;justify-content:center}
+.eye-toggle{position:absolute;right:13px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,.3);background:none;border:none;padding:0}
+.eye-toggle:hover{color:rgba(255,255,255,.7)}
+.logout-btn{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px;background:rgba(197,48,48,.12);border:1px solid rgba(197,48,48,.2);color:#FC8181;font-size:.8rem;font-weight:600;cursor:pointer;transition:.2s}
+.logout-btn:hover{background:rgba(197,48,48,.22)}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-box">
+    <div class="login-glow"></div>
+    <div class="login-logo">
+      <div class="brand">Electro<span>adib</span>.ma</div>
+      <div class="sub">Panneau d'administration</div>
+    </div>
+    <div class="login-badge">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Accès sécurisé
+    </div>
+    <div class="login-title">Connexion</div>
+    <div class="login-sub">Entrez vos identifiants pour accéder au tableau de bord</div>
+    <div class="login-input-wrap">
+      <span class="login-input-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+      <input class="login-input" id="login-user" type="text" placeholder="Nom d'utilisateur" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-input-wrap">
+      <span class="login-input-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </span>
+      <input class="login-input" id="login-pass" type="password" placeholder="Mot de passe" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="eye-toggle" onclick="togglePass()" type="button">
+        <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div class="login-error" id="login-error">Identifiants incorrects. Veuillez réessayer.</div>
+    <button class="login-btn" onclick="doLogin()">Se connecter</button>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PANEL (hidden until login) ═══ -->
+<div id="admin-panel" style="display:none">
+
+<div class="toast" id="toast"></div>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div style="font-size:1rem;font-weight:800;color:#fff">Electro<span style="color:#D4AF37">adib</span>.ma</div>
+      <div class="version">⚙️ Panneau d'administration</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Général</div>
+      <div class="nav-item active" onclick="showSection('general')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Infos générales
+      </div>
+      <div class="nav-item" onclick="showSection('hero')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Page d'accueil
+      </div>
+
+      <div class="nav-section-label">Catalogue</div>
+      <div class="nav-item" onclick="showSection('produits')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Produits
+      </div>
+      <div class="nav-item" onclick="showSection('services')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+        Services & Tarifs
+      </div>
+
+      <div class="nav-section-label">Contenu</div>
+      <div class="nav-item" onclick="showSection('equipe')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Équipe
+      </div>
+      <div class="nav-item" onclick="showSection('temoignages')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Témoignages
+      </div>
+      <div class="nav-item" onclick="showSection('faq')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        FAQ
+      </div>
+      <div class="nav-item" onclick="showSection('villes')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Villes & Zone
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="preview-btn" onclick="openSite()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Voir le site
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main-content">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title" id="topbar-title">Infos générales</span>
+      </div>
+      <div class="topbar-right">
+        <button class="logout-btn" onclick="doLogout()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Déconnexion</button>
+        <button class="save-all-btn" onclick="saveAll()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Sauvegarder
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ SECTION: GÉNÉRAL ═══ -->
+      <div class="section-panel active" id="panel-general">
+        <div class="panel-header">
+          <h2>Informations générales</h2>
+          <p>Contact, réseaux sociaux, coordonnées de l'entreprise</p>
+        </div>
+        <div class="status-bar"><div class="status-dot"></div>Modifications sauvegardées automatiquement</div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 12 19.79 19.79 0 011.61 3.45 2 2 0 013.59 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 8.96a16 16 0 006 6l.92-.92a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+            Contact
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Numéro WhatsApp</label>
+              <input class="form-input" id="g-wa" placeholder="212627460811" value="212627460811">
+              <div class="form-help">Sans + ni espaces (ex: 212627460811)</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Téléphone affiché</label>
+              <input class="form-input" id="g-tel" placeholder="+212 627 460 811" value="+212 627 460 811">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Instagram</label>
+              <input class="form-input" id="g-instagram" placeholder="electroadib" value="electroadib">
+              <div class="form-help">Sans @, juste le nom du compte</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email (optionnel)</label>
+              <input class="form-input" id="g-email" placeholder="contact@electroadib.ma">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Horaires d'ouverture
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Lundi – Samedi</label>
+              <input class="form-input" id="g-horaire-sem" value="8h00 – 20h00">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Dimanche</label>
+              <input class="form-input" id="g-horaire-dim" value="9h00 – 18h00">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            À propos de l'entreprise
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fondateur</label>
+              <input class="form-input" id="g-fondateur" value="Abdessamad Elhassani">
+            </div>
+            <div class="form-group">
+              <label class="form-label">CEO / Directeur</label>
+              <input class="form-input" id="g-ceo" value="Adib Benlarbi Hassani">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Année de fondation</label>
+              <input class="form-input" id="g-annee" type="number" value="1989">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nombre de clients</label>
+              <input class="form-input" id="g-clients" value="5 000+">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Texte de présentation</label>
+            <textarea class="form-input" id="g-about" rows="4">L'histoire d'Electroadib.ma commence en 1989, à Oujda. Ce qui a débuté comme un petit atelier de réparation s'est transformé en l'un des prestataires de climatisation les plus reconnus de la région orientale.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: HERO ═══ -->
+      <div class="section-panel" id="panel-hero">
+        <div class="panel-header">
+          <h2>Page d'accueil</h2>
+          <p>Texte principal, sous-titre, bannière promotionnelle</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🏠 Section Hero (bannière principale)</div>
+          <div class="form-group">
+            <label class="form-label">Titre principal (ligne 1)</label>
+            <input class="form-input" id="h-titre1" value="Le confort">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Titre principal (ligne 2 — en or)</label>
+            <input class="form-input" id="h-titre2" value="commence ici.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sous-titre</label>
+            <textarea class="form-input" id="h-subtitle" rows="2">Climatisation haut de gamme dans toute la région orientale du Maroc. Installation, réparation et entretien par des experts certifiés.</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Badge (petit texte en haut du hero)</label>
+            <input class="form-input" id="h-badge" value="Région Orientale · Depuis 1989">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📢 Barre promotionnelle (tout en haut)</div>
+          <div class="form-group">
+            <label class="form-label">Texte promo</label>
+            <input class="form-input" id="h-promo" value="Livraison gratuite région orientale · Installation garantie · Disponible 7j/7">
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Statistiques affichées</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stat 1 — Chiffre</label>
+              <input class="form-input" id="h-stat1-num" value="35+">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stat 1 — Label</label>
+              <input class="form-input" id="h-stat1-lbl" value="Années d'expérience">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stat 2 — Chiffre</label>
+              <input class="form-input" id="h-stat2-num" value="5 000+">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stat 2 — Label</label>
+              <input class="form-input" id="h-stat2-lbl" value="Clients satisfaits">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Stat 3 — Chiffre</label>
+              <input class="form-input" id="h-stat3-num" value="6">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stat 3 — Label</label>
+              <input class="form-input" id="h-stat3-lbl" value="Villes couvertes">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: PRODUITS ═══ -->
+      <div class="section-panel" id="panel-produits">
+        <div class="panel-header">
+          <h2>Catalogue produits</h2>
+          <p>Ajouter, modifier ou supprimer des climatiseurs</p>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Liste des climatiseurs
+          </div>
+          <div class="prod-list" id="prod-list"></div>
+          <button class="btn-add" onclick="openProdModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter un climatiseur
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: SERVICES ═══ -->
+      <div class="section-panel" id="panel-services">
+        <div class="panel-header">
+          <h2>Services & Tarifs</h2>
+          <p>Modifier les prix et descriptions de vos services</p>
+        </div>
+        <div class="card">
+          <div class="card-title">🔧 Installation</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Tarif split simple</label>
+              <input class="form-input" id="s-inst1" value="Dès 600 DH">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tarif multi-split (2 unités)</label>
+              <input class="form-input" id="s-inst2" value="Dès 1 000 DH">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description courte</label>
+            <textarea class="form-input" id="s-inst-desc" rows="2">Installation professionnelle par nos techniciens certifiés. Travail propre, rapide et durable.</textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚙️ Réparation</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Diagnostic</label>
+              <input class="form-input" id="s-rep1" value="Gratuit">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Réparation simple</label>
+              <input class="form-input" id="s-rep2" value="Dès 200 DH">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Recharge gaz</label>
+              <input class="form-input" id="s-rep3" value="Dès 400 DH">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Remplacement compresseur</label>
+              <input class="form-input" id="s-rep4" value="Sur devis">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">💨 Entretien & Nettoyage</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Entretien simple</label>
+              <input class="form-input" id="s-ent1" value="250 DH">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Entretien complet</label>
+              <input class="form-input" id="s-ent2" value="400 DH">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Contrat annuel (2 visites)</label>
+              <input class="form-input" id="s-ent3" value="600 DH/an">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Livraison région orientale</label>
+              <input class="form-input" id="s-livr" value="Gratuite">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: ÉQUIPE ═══ -->
+      <div class="section-panel" id="panel-equipe">
+        <div class="panel-header">
+          <h2>Équipe</h2>
+          <p>Gérer les membres de votre équipe</p>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Membres de l'équipe
+          </div>
+          <div id="team-list"></div>
+          <button class="btn-add" onclick="openTeamModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter un membre
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: TÉMOIGNAGES ═══ -->
+      <div class="section-panel" id="panel-temoignages">
+        <div class="panel-header">
+          <h2>Témoignages clients</h2>
+          <p>Ajouter ou modifier les avis clients affichés</p>
+        </div>
+        <div class="card">
+          <div class="card-title">⭐ Avis clients</div>
+          <div id="testi-list"></div>
+          <button class="btn-add" onclick="openTestiModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter un témoignage
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: FAQ ═══ -->
+      <div class="section-panel" id="panel-faq">
+        <div class="panel-header">
+          <h2>FAQ — Questions fréquentes</h2>
+          <p>Gérer les questions et réponses affichées sur le site</p>
+        </div>
+        <div class="card">
+          <div class="card-title">❓ Questions & Réponses</div>
+          <div id="faq-list"></div>
+          <button class="btn-add" onclick="openFaqModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Ajouter une question
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ SECTION: VILLES ═══ -->
+      <div class="section-panel" id="panel-villes">
+        <div class="panel-header">
+          <h2>Villes & Zone de service</h2>
+          <p>Modifier les villes affichées sur le site</p>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Villes couvertes
+          </div>
+          <div class="form-group">
+            <label class="form-label">Liste des villes (séparées par une virgule)</label>
+            <textarea class="form-input" id="v-villes" rows="3">Oujda, Berkane, Nador, Saïdia, Ahfir, Taourirt</textarea>
+            <div class="form-help">Ex: Oujda, Berkane, Nador, Saïdia, Ahfir, Taourirt</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message de livraison</label>
+            <input class="form-input" id="v-livraison" value="Livraison gratuite — Oujda · Berkane · Nador · Saïdia · Ahfir · Taourirt">
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div>
+
+<!-- ═══ MODAL: PRODUIT ═══ -->
+<div class="modal-overlay" id="prod-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="prod-modal-title">Ajouter un climatiseur</h3>
+      <button class="modal-close" onclick="closeModal('prod-modal')">×</button>
+    </div>
+    <input type="hidden" id="prod-edit-idx" value="-1">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Marque *</label>
+        <select class="form-input" id="pm-brand">
+          <option>XPOWER</option><option>SAMSUNG</option><option>LG</option>
+          <option>DAIKIN</option><option>MIDEA</option><option>CARRIER</option>
+          <option>MEGALIFE</option><option>FITCO</option><option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du modèle *</label>
+        <input class="form-input" id="pm-name" placeholder="Ex: Wind-Free Elite">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Puissance (BTU) *</label>
+        <select class="form-input" id="pm-btu">
+          <option value="9 000">9 000 BTU</option>
+          <option value="12 000">12 000 BTU</option>
+          <option value="18 000">18 000 BTU</option>
+          <option value="24 000">24 000 BTU</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prix (DH) *</label>
+        <input class="form-input" id="pm-price" type="number" placeholder="5900">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Badge</label>
+        <select class="form-input" id="pm-badge">
+          <option>INVERTER</option><option>BEST SELLER</option><option>POPULAIRE</option>
+          <option>PREMIUM</option><option>ECO</option><option>PUISSANCE</option>
+          <option>SAMSUNG</option><option>LG</option><option>CARRIER</option><option>DESIGN</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Promo (laisser vide si aucune)</label>
+        <input class="form-input" id="pm-promo" placeholder="Ex: -10%">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tags filtres</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer"><input type="checkbox" id="tag-budget"> Moins de 5 000 DH</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.8rem;cursor:pointer"><input type="checkbox" id="tag-premium"> Premium</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Disponibilité</label>
+        <label class="switch" style="margin-top:8px"><input type="checkbox" id="pm-dispo" checked><span class="slider"></span></label>
+        <span style="font-size:.8rem;color:rgba(255,255,255,.6);margin-left:8px">En stock</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('prod-modal')">Annuler</button>
+      <button class="btn-save" onclick="saveProd()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: ÉQUIPE ═══ -->
+<div class="modal-overlay" id="team-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="team-modal-title">Ajouter un membre</h3>
+      <button class="modal-close" onclick="closeModal('team-modal')">×</button>
+    </div>
+    <input type="hidden" id="team-edit-idx" value="-1">
+    <div class="form-group">
+      <label class="form-label">Photo</label>
+      <input type="file" accept="image/*" class="form-input" id="tm-photo-file" onchange="previewTeamPhoto(this)" style="padding:8px;cursor:pointer">
+      <img id="tm-photo-prev" src="" style="width:60px;height:60px;border-radius:50%;object-fit:cover;margin-top:8px;display:none;border:2px solid rgba(212,175,55,.4)">
+      <input type="hidden" id="tm-photo-data">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nom complet *</label>
+        <input class="form-input" id="tm-name" placeholder="Prénom Nom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Poste *</label>
+        <select class="form-input" id="tm-badge">
+          <option value="founder">Fondateur</option>
+          <option value="ceo">CEO</option>
+          <option value="tech">Technicien Spécialisé</option>
+          <option value="tech">Technicien Installation</option>
+          <option value="tech">Technicien Senior</option>
+          <option value="tech">Commercial</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Spécialité</label>
+      <input class="form-input" id="tm-spec" placeholder="Ex: Installation & Systèmes VRF">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('team-modal')">Annuler</button>
+      <button class="btn-save" onclick="saveTeamMember()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: TÉMOIGNAGE ═══ -->
+<div class="modal-overlay" id="testi-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="testi-modal-title">Ajouter un témoignage</h3>
+      <button class="modal-close" onclick="closeModal('testi-modal')">×</button>
+    </div>
+    <input type="hidden" id="testi-edit-idx" value="-1">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nom du client *</label>
+        <input class="form-input" id="tes-name" placeholder="Karim Alaoui">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ville</label>
+        <input class="form-input" id="tes-city" placeholder="Oujda">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Témoignage *</label>
+      <textarea class="form-input" id="tes-text" rows="4" placeholder="Installation rapide et propre. Technicien professionnel..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <select class="form-input" id="tes-stars">
+        <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+        <option value="4">⭐⭐⭐⭐ (4/5)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('testi-modal')">Annuler</button>
+      <button class="btn-save" onclick="saveTestimonial()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: FAQ ═══ -->
+<div class="modal-overlay" id="faq-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="faq-modal-title">Ajouter une question</h3>
+      <button class="modal-close" onclick="closeModal('faq-modal')">×</button>
+    </div>
+    <input type="hidden" id="faq-edit-idx" value="-1">
+    <div class="form-group">
+      <label class="form-label">Catégorie</label>
+      <select class="form-input" id="faq-cat">
+        <option value="prods">Climatiseurs & produits</option>
+        <option value="install">Installation & tarifs</option>
+        <option value="repair">Réparation & entretien</option>
+        <option value="delivery">Livraison & zone</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Question *</label>
+      <input class="form-input" id="faq-q" placeholder="Ex: Quelle taille de climatiseur choisir ?">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Réponse *</label>
+      <textarea class="form-input" id="faq-a" rows="5" placeholder="Réponse détaillée..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('faq-modal')">Annuler</button>
+      <button class="btn-save" onclick="saveFaq()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ══════════════════════════════════
+// AUTHENTIFICATION
+// Modifiez ici vos identifiants
+// ══════════════════════════════════
+var ADMIN_USERNAME = 'electroadib';
+var ADMIN_PASSWORD = 'Electroadib2024!';
+var SESSION_KEY = 'ea_admin_session';
+
+function checkSession() {
+  var session = sessionStorage.getItem(SESSION_KEY);
+  if (session === 'authenticated') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    return true;
+  }
+  return false;
+}
+
+function doLogin() {
+  var user = document.getElementById('login-user').value.trim();
+  var pass = document.getElementById('login-pass').value;
+  var userInput = document.getElementById('login-user');
+  var passInput = document.getElementById('login-pass');
+  var errorEl = document.getElementById('login-error');
+
+  if (user === ADMIN_USERNAME && pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, 'authenticated');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    errorEl.style.display = 'none';
+    loadData();
+    renderProds();
+  } else {
+    userInput.classList.add('error');
+    passInput.classList.add('error');
+    errorEl.style.display = 'block';
+    setTimeout(function() {
+      userInput.classList.remove('error');
+      passInput.classList.remove('error');
+    }, 500);
+    document.getElementById('login-pass').value = '';
+  }
+}
+
+function doLogout() {
+  if (!confirm('Voulez-vous vous déconnecter ?')) return;
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').value = '';
+  document.getElementById('login-pass').value = '';
+}
+
+function togglePass() {
+  var inp = document.getElementById('login-pass');
+  var icon = document.getElementById('eye-icon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    inp.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+// Check session on load
+checkSession();
+
+
+var STORAGE_KEY = 'electroadib_admin';
+var currentSection = 'general';
+var sidebarOpen = window.innerWidth > 768;
+
+// ── DATA ──
+var data = {
+  general: {},
+  hero: {},
+  produits: [],
+  services: {},
+  equipe: [],
+  temoignages: [],
+  faq: { prods: [], install: [], repair: [], delivery: [] },
+  villes: {}
+};
+
+// Default products
+var DEFAULT_PRODS = [
+  {brand:'XPOWER',name:'XPOWER Inverter Elite',btu:'9 000',price:3900,badge:'INVERTER',promo:'-10%',tags:'9000 budget',dispo:true},
+  {brand:'XPOWER',name:'XPOWER Inverter Pro',btu:'12 000',price:4800,badge:'POPULAIRE',promo:'',tags:'12000',dispo:true},
+  {brand:'SAMSUNG',name:'Samsung Wind-Free Comfort',btu:'9 000',price:5200,badge:'SAMSUNG',promo:'',tags:'9000 premium',dispo:true},
+  {brand:'SAMSUNG',name:'Samsung Wind-Free Elite',btu:'12 000',price:6800,badge:'BEST SELLER',promo:'',tags:'12000 premium',dispo:true},
+  {brand:'DAIKIN',name:'Daikin Sensira Plus',btu:'12 000',price:5900,badge:'PREMIUM',promo:'',tags:'12000 premium',dispo:true},
+  {brand:'DAIKIN',name:'Daikin Comfora',btu:'18 000',price:8500,badge:'PUISSANCE',promo:'',tags:'18000 premium',dispo:true},
+  {brand:'MIDEA',name:'Midea Inverter Smart',btu:'9 000',price:3500,badge:'ECO',promo:'PROMO',tags:'9000 budget',dispo:true},
+  {brand:'LG',name:'LG DUALCOOL Premium',btu:'9 000',price:5500,badge:'LG',promo:'',tags:'9000 premium',dispo:true},
+  {brand:'CARRIER',name:'Carrier Xtreme 12K',btu:'12 000',price:6200,badge:'CARRIER',promo:'',tags:'12000',dispo:true},
+  {brand:'CARRIER',name:'Carrier Elite 18K',btu:'18 000',price:9000,badge:'PREMIUM',promo:'',tags:'18000 premium',dispo:true}
+];
+
+var DEFAULT_TEAM = [
+  {name:'Abdessamad Elhassani',badge:'founder',spec:'Fondateur de l\'entreprise depuis 1989',photo:''},
+  {name:'Adib Benlarbi Hassani',badge:'ceo',spec:'Directeur Général',photo:''},
+  {name:'Yahya Boushaba',badge:'tech',spec:'Installation & Systèmes VRF',photo:''}
+];
+
+var DEFAULT_TESTI = [
+  {name:'Karim Alaoui',city:'Oujda',text:'Installation rapide et propre. Technicien professionnel. Très satisfait du résultat.',stars:5},
+  {name:'Fatima Benali',city:'Berkane',text:'Réparation en 2h en plein été. Intervention ultra rapide, problème résolu. Je recommande !',stars:5},
+  {name:'Mohammed Ouali',city:'Nador',text:'Samsung Wind-Free commandé et installé le lendemain. Service impeccable, prix compétitif.',stars:5},
+  {name:'Sara Lamrani',city:'Saïdia',text:'Entretien annuel très sérieux, rapport complet. Le climatiseur refroidit bien mieux.',stars:5},
+  {name:'Ahmed Maarouf',city:'Taourirt',text:'Fuite de gaz réparée proprement, tarif respecté. Équipe sérieuse et ponctuelle.',stars:5},
+  {name:'Rachid Benkhalil',city:'Ahfir',text:'Multi-split pour 3 pièces, câbles parfaitement cachés. Travail impeccable. Client depuis 5 ans.',stars:5}
+];
+
+var DEFAULT_FAQ = {
+  prods: [
+    {q:'Quelle taille de climatiseur choisir ?',a:'1 000 BTU pour 10 m². Pour 20 m² → 9 000 BTU. Pour 25–35 m² → 12 000 BTU. Au-delà de 35 m² → 18 000 BTU ou multi-split.'},
+    {q:'Différence entre Inverter et non-Inverter ?',a:'Un Inverter adapte sa puissance à la demande : jusqu\'à 60% d\'économies, température plus stable, plus silencieux, durée de vie plus longue.'},
+    {q:'Quelle marque recommandez-vous ?',a:'Samsung et LG pour le rapport qualité/prix. Daikin pour la fiabilité. Carrier pour les applications professionnelles. XPOWER et Midea pour un budget maîtrisé.'},
+    {q:'Proposez-vous des modèles Wi-Fi connectés ?',a:'Oui ! Samsung, LG et Daikin proposent des modèles pilotables via smartphone.'}
+  ],
+  install: [
+    {q:'Combien coûte l\'installation ?',a:'À partir de 600 DH pour un split simple. 1 000 DH+ pour un multi-split. Devis gratuit sur demande.'},
+    {q:'Combien de temps dure une installation ?',a:'2 à 4 heures pour un split simple. Une journée pour une installation complexe.'},
+    {q:'L\'installation est-elle garantie ?',a:'Oui, 2 ans de garantie sur la main-d\'œuvre.'},
+    {q:'Pouvez-vous installer dans un appartement ?',a:'Absolument : appartements, villas, bureaux, commerces.'}
+  ],
+  repair: [
+    {q:'Mon climatiseur ne refroidit plus, que faire ?',a:'Contactez-nous via WhatsApp : diagnostic complet gratuit et devis transparent avant toute réparation.'},
+    {q:'Combien coûte une réparation ?',a:'Diagnostic gratuit. Réparation simple dès 200 DH. Recharge gaz dès 400 DH.'},
+    {q:'À quelle fréquence entretenir son climatiseur ?',a:'Une fois par an, avant l\'été. Réduit les pannes de 80% et prolonge la durée de vie de 5 à 7 ans.'},
+    {q:'Intervenez-vous en urgence ?',a:'Oui ! Nous essayons d\'intervenir le jour même pour les urgences.'}
+  ],
+  delivery: [
+    {q:'Livrez-vous dans toute la région orientale ?',a:'Oui, livraison gratuite : Oujda, Berkane, Nador, Saïdia, Ahfir, Taourirt et communes environnantes.'},
+    {q:'Quel est le délai de livraison ?',a:'24 à 48h pour les appareils en stock. 3 à 5 jours ouvrables pour les commandes spéciales.'},
+    {q:'Peut-on payer en plusieurs fois ?',a:'Oui, facilités de paiement disponibles pour les achats importants.'},
+    {q:'Proposez-vous un service après-vente ?',a:'Oui, suivi complet après vente et installation.'}
+  ]
+};
+
+// ── LOAD DATA ──
+function loadData() {
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      var parsed = JSON.parse(saved);
+      data.produits = parsed.produits && parsed.produits.length ? parsed.produits : DEFAULT_PRODS;
+      data.equipe = parsed.equipe && parsed.equipe.length ? parsed.equipe : DEFAULT_TEAM;
+      data.temoignages = parsed.temoignages && parsed.temoignages.length ? parsed.temoignages : DEFAULT_TESTI;
+      data.faq = parsed.faq || DEFAULT_FAQ;
+    } else {
+      data.produits = DEFAULT_PRODS;
+      data.equipe = DEFAULT_TEAM;
+      data.temoignages = DEFAULT_TESTI;
+      data.faq = DEFAULT_FAQ;
+    }
+  } catch(e) {
+    data.produits = DEFAULT_PRODS;
+    data.equipe = DEFAULT_TEAM;
+    data.temoignages = DEFAULT_TESTI;
+    data.faq = DEFAULT_FAQ;
+  }
+}
+
+// ── SAVE ALL ──
+function saveAll() {
+  // Collect form values
+  var saved = {
+    general: {
+      wa: document.getElementById('g-wa').value,
+      tel: document.getElementById('g-tel').value,
+      instagram: document.getElementById('g-instagram').value,
+      email: document.getElementById('g-email').value,
+      horaireSem: document.getElementById('g-horaire-sem').value,
+      horaireDim: document.getElementById('g-horaire-dim').value,
+      fondateur: document.getElementById('g-fondateur').value,
+      ceo: document.getElementById('g-ceo').value,
+      annee: document.getElementById('g-annee').value,
+      clients: document.getElementById('g-clients').value,
+      about: document.getElementById('g-about').value
+    },
+    hero: {
+      titre1: document.getElementById('h-titre1').value,
+      titre2: document.getElementById('h-titre2').value,
+      subtitle: document.getElementById('h-subtitle').value,
+      badge: document.getElementById('h-badge').value,
+      promo: document.getElementById('h-promo').value,
+      stat1num: document.getElementById('h-stat1-num').value,
+      stat1lbl: document.getElementById('h-stat1-lbl').value,
+      stat2num: document.getElementById('h-stat2-num').value,
+      stat2lbl: document.getElementById('h-stat2-lbl').value,
+      stat3num: document.getElementById('h-stat3-num').value,
+      stat3lbl: document.getElementById('h-stat3-lbl').value
+    },
+    services: {
+      inst1: document.getElementById('s-inst1').value,
+      inst2: document.getElementById('s-inst2').value,
+      instDesc: document.getElementById('s-inst-desc').value,
+      rep1: document.getElementById('s-rep1').value,
+      rep2: document.getElementById('s-rep2').value,
+      rep3: document.getElementById('s-rep3').value,
+      rep4: document.getElementById('s-rep4').value,
+      ent1: document.getElementById('s-ent1').value,
+      ent2: document.getElementById('s-ent2').value,
+      ent3: document.getElementById('s-ent3').value,
+      livr: document.getElementById('s-livr').value
+    },
+    villes: {
+      list: document.getElementById('v-villes').value,
+      livraison: document.getElementById('v-livraison').value
+    },
+    produits: data.produits,
+    equipe: data.equipe,
+    temoignages: data.temoignages,
+    faq: data.faq
+  };
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    showToast('✅ Toutes les modifications ont été sauvegardées !', 'success');
+  } catch(e) {
+    showToast('❌ Erreur lors de la sauvegarde', 'error');
+  }
+}
+
+// ── TOAST ──
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.style.display = 'block';
+  setTimeout(function() { t.style.display = 'none'; }, 3000);
+}
+
+// ── SECTIONS ──
+var SECTION_TITLES = {
+  general: 'Infos générales', hero: 'Page d\'accueil',
+  produits: 'Produits', services: 'Services & Tarifs',
+  equipe: 'Équipe', temoignages: 'Témoignages',
+  faq: 'FAQ', villes: 'Villes & Zone'
+};
+function showSection(id) {
+  document.querySelectorAll('.section-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  event.currentTarget.classList.add('active');
+  currentSection = id;
+  document.getElementById('topbar-title').textContent = SECTION_TITLES[id] || id;
+  if (window.innerWidth < 768) toggleSidebar();
+  renderSection(id);
+}
+function renderSection(id) {
+  if (id === 'produits') renderProds();
+  if (id === 'equipe') renderTeam();
+  if (id === 'temoignages') renderTestis();
+  if (id === 'faq') renderFAQ();
+}
+
+// ── SIDEBAR ──
+function toggleSidebar() {
+  var sb = document.getElementById('sidebar');
+  var main = document.getElementById('main-content');
+  sidebarOpen = !sidebarOpen;
+  if (sidebarOpen) {
+    sb.style.width = '240px';
+    if (window.innerWidth > 768) main.style.marginLeft = '240px';
+  } else {
+    sb.style.width = '0';
+    main.style.marginLeft = '0';
+  }
+}
+
+// ── OPEN SITE ──
+function openSite() { window.open('index.html', '_blank'); }
+
+// ── MODAL ──
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════
+// PRODUCTS
+// ══════════════════════════
+function renderProds() {
+  var list = document.getElementById('prod-list');
+  if (!list) return;
+  if (!data.produits.length) { list.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.84rem;text-align:center;padding:20px">Aucun produit. Ajoutez votre premier climatiseur.</p>'; return; }
+  list.innerHTML = data.produits.map(function(p, i) {
+    return '<div class="prod-item">'
+      + '<div class="prod-item-info">'
+      + '<div class="prod-item-brand">' + p.brand + '</div>'
+      + '<div class="prod-item-name">' + p.name + '</div>'
+      + '<div class="prod-item-meta"><span>' + p.btu + ' BTU</span><span style="color:#D4AF37;font-weight:700">' + p.price.toLocaleString() + ' DH</span>'
+      + (p.promo ? '<span style="color:#FC8181">' + p.promo + '</span>' : '')
+      + '</div>'
+      + '</div>'
+      + '<div class="prod-item-actions">'
+      + '<button class="btn-edit" onclick="editProd(' + i + ')">Modifier</button>'
+      + '<button class="btn-del" onclick="deleteProd(' + i + ')">×</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+function openProdModal(idx) {
+  var modal = document.getElementById('prod-modal');
+  document.getElementById('prod-modal-title').textContent = idx !== undefined ? 'Modifier le climatiseur' : 'Ajouter un climatiseur';
+  document.getElementById('prod-edit-idx').value = idx !== undefined ? idx : -1;
+  if (idx !== undefined) {
+    var p = data.produits[idx];
+    document.getElementById('pm-brand').value = p.brand;
+    document.getElementById('pm-name').value = p.name;
+    document.getElementById('pm-btu').value = p.btu;
+    document.getElementById('pm-price').value = p.price;
+    document.getElementById('pm-badge').value = p.badge;
+    document.getElementById('pm-promo').value = p.promo || '';
+    document.getElementById('tag-budget').checked = p.tags.indexOf('budget') >= 0;
+    document.getElementById('tag-premium').checked = p.tags.indexOf('premium') >= 0;
+    document.getElementById('pm-dispo').checked = p.dispo !== false;
+  } else {
+    document.getElementById('pm-brand').value = 'SAMSUNG';
+    document.getElementById('pm-name').value = '';
+    document.getElementById('pm-btu').value = '12 000';
+    document.getElementById('pm-price').value = '';
+    document.getElementById('pm-badge').value = 'POPULAIRE';
+    document.getElementById('pm-promo').value = '';
+    document.getElementById('tag-budget').checked = false;
+    document.getElementById('tag-premium').checked = false;
+    document.getElementById('pm-dispo').checked = true;
+  }
+  modal.classList.add('open');
+}
+function editProd(i) { openProdModal(i); }
+function deleteProd(i) {
+  if (!confirm('Supprimer ce produit ?')) return;
+  data.produits.splice(i, 1);
+  saveAll();
+  renderProds();
+}
+function saveProd() {
+  var name = document.getElementById('pm-name').value.trim();
+  var price = parseInt(document.getElementById('pm-price').value);
+  if (!name || !price) { showToast('Veuillez remplir le nom et le prix.', 'error'); return; }
+  var tags = document.getElementById('pm-btu').value.replace(' ', '');
+  if (document.getElementById('tag-budget').checked) tags += ' budget';
+  if (document.getElementById('tag-premium').checked) tags += ' premium';
+  var prod = {
+    brand: document.getElementById('pm-brand').value,
+    name: name,
+    btu: document.getElementById('pm-btu').value,
+    price: price,
+    badge: document.getElementById('pm-badge').value,
+    promo: document.getElementById('pm-promo').value,
+    tags: tags.trim(),
+    dispo: document.getElementById('pm-dispo').checked
+  };
+  var idx = parseInt(document.getElementById('prod-edit-idx').value);
+  if (idx >= 0) { data.produits[idx] = prod; } else { data.produits.push(prod); }
+  closeModal('prod-modal');
+  saveAll();
+  renderProds();
+}
+
+// ══════════════════════════
+// TEAM
+// ══════════════════════════
+function renderTeam() {
+  var list = document.getElementById('team-list');
+  if (!list) return;
+  var badgeLabels = {founder:'Fondateur', ceo:'CEO', tech:'Technicien'};
+  list.innerHTML = data.equipe.map(function(m, i) {
+    var initials = m.name.split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,2);
+    var photoHTML = m.photo && m.photo.length > 10 ? '<img src="' + m.photo + '">' : initials;
+    return '<div class="team-member-row">'
+      + '<div class="member-av">' + photoHTML + '</div>'
+      + '<div class="member-info"><div class="member-name">' + m.name + '</div>'
+      + '<div class="member-role">' + (badgeLabels[m.badge] || m.badge) + ' — ' + m.spec + '</div></div>'
+      + '<div class="prod-item-actions">'
+      + '<button class="btn-edit" onclick="editTeam(' + i + ')">Modifier</button>'
+      + '<button class="btn-del" onclick="deleteTeam(' + i + ')">×</button>'
+      + '</div></div>';
+  }).join('');
+}
+function openTeamModal(idx) {
+  document.getElementById('team-modal-title').textContent = idx !== undefined ? 'Modifier le membre' : 'Ajouter un membre';
+  document.getElementById('team-edit-idx').value = idx !== undefined ? idx : -1;
+  if (idx !== undefined) {
+    var m = data.equipe[idx];
+    document.getElementById('tm-name').value = m.name;
+    document.getElementById('tm-badge').value = m.badge;
+    document.getElementById('tm-spec').value = m.spec;
+    document.getElementById('tm-photo-data').value = m.photo || '';
+    var prev = document.getElementById('tm-photo-prev');
+    if (m.photo) { prev.src = m.photo; prev.style.display = 'block'; }
+    else { prev.style.display = 'none'; }
+  } else {
+    document.getElementById('tm-name').value = '';
+    document.getElementById('tm-badge').value = 'tech';
+    document.getElementById('tm-spec').value = '';
+    document.getElementById('tm-photo-data').value = '';
+    document.getElementById('tm-photo-prev').style.display = 'none';
+  }
+  document.getElementById('team-modal').classList.add('open');
+}
+function editTeam(i) { openTeamModal(i); }
+function deleteTeam(i) {
+  if (!confirm('Supprimer ce membre ?')) return;
+  data.equipe.splice(i, 1);
+  saveAll(); renderTeam();
+}
+function previewTeamPhoto(inp) {
+  if (!inp.files||!inp.files[0]) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    document.getElementById('tm-photo-data').value = e.target.result;
+    var prev = document.getElementById('tm-photo-prev');
+    prev.src = e.target.result; prev.style.display = 'block';
+  };
+  r.readAsDataURL(inp.files[0]);
+}
+function saveTeamMember() {
+  var name = document.getElementById('tm-name').value.trim();
+  if (!name) { showToast('Veuillez entrer un nom.', 'error'); return; }
+  var member = {
+    name: name,
+    badge: document.getElementById('tm-badge').value,
+    spec: document.getElementById('tm-spec').value,
+    photo: document.getElementById('tm-photo-data').value
+  };
+  var idx = parseInt(document.getElementById('team-edit-idx').value);
+  if (idx >= 0) { data.equipe[idx] = member; } else { data.equipe.push(member); }
+  closeModal('team-modal');
+  saveAll(); renderTeam();
+}
+
+// ══════════════════════════
+// TESTIMONIALS
+// ══════════════════════════
+function renderTestis() {
+  var list = document.getElementById('testi-list');
+  if (!list) return;
+  list.innerHTML = data.temoignages.map(function(t, i) {
+    return '<div class="testi-item-row">'
+      + '<div>'
+      + '<div class="testi-author-tag">' + t.name + ' — ' + t.city + '</div>'
+      + '<div class="testi-text-prev">"' + t.text.substring(0,80) + (t.text.length>80?'...':'') + '"</div>'
+      + '<div class="testi-city-tag">⭐'.repeat(t.stars||5) + '</div>'
+      + '</div>'
+      + '<div class="prod-item-actions">'
+      + '<button class="btn-edit" onclick="editTesti(' + i + ')">Modifier</button>'
+      + '<button class="btn-del" onclick="deleteTesti(' + i + ')">×</button>'
+      + '</div></div>';
+  }).join('');
+}
+function openTestiModal(idx) {
+  document.getElementById('testi-modal-title').textContent = idx !== undefined ? 'Modifier le témoignage' : 'Ajouter un témoignage';
+  document.getElementById('testi-edit-idx').value = idx !== undefined ? idx : -1;
+  if (idx !== undefined) {
+    var t = data.temoignages[idx];
+    document.getElementById('tes-name').value = t.name;
+    document.getElementById('tes-city').value = t.city;
+    document.getElementById('tes-text').value = t.text;
+    document.getElementById('tes-stars').value = t.stars || 5;
+  } else {
+    document.getElementById('tes-name').value = '';
+    document.getElementById('tes-city').value = '';
+    document.getElementById('tes-text').value = '';
+    document.getElementById('tes-stars').value = 5;
+  }
+  document.getElementById('testi-modal').classList.add('open');
+}
+function editTesti(i) { openTestiModal(i); }
+function deleteTesti(i) {
+  if (!confirm('Supprimer ce témoignage ?')) return;
+  data.temoignages.splice(i, 1);
+  saveAll(); renderTestis();
+}
+function saveTestimonial() {
+  var name = document.getElementById('tes-name').value.trim();
+  var text = document.getElementById('tes-text').value.trim();
+  if (!name||!text) { showToast('Nom et texte requis.', 'error'); return; }
+  var testi = {
+    name: name,
+    city: document.getElementById('tes-city').value,
+    text: text,
+    stars: parseInt(document.getElementById('tes-stars').value)
+  };
+  var idx = parseInt(document.getElementById('testi-edit-idx').value);
+  if (idx >= 0) { data.temoignages[idx] = testi; } else { data.temoignages.push(testi); }
+  closeModal('testi-modal');
+  saveAll(); renderTestis();
+}
+
+// ══════════════════════════
+// FAQ
+// ══════════════════════════
+function renderFAQ() {
+  var list = document.getElementById('faq-list');
+  if (!list) return;
+  var cats = ['prods','install','repair','delivery'];
+  var catLabels = {prods:'Produits',install:'Installation',repair:'Réparation',delivery:'Livraison'};
+  var html = '';
+  cats.forEach(function(cat) {
+    var items = (data.faq[cat] || []);
+    html += '<div style="margin-bottom:20px">';
+    html += '<div style="font-size:.72rem;font-weight:700;color:#D4AF37;letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px">' + catLabels[cat] + ' (' + items.length + ')</div>';
+    html += items.map(function(f, i) {
+      return '<div class="faq-item-row">'
+        + '<div class="faq-item-q">' + f.q + '</div>'
+        + '<div class="faq-item-a">' + f.a.substring(0,100) + (f.a.length>100?'...':'') + '</div>'
+        + '<div class="faq-item-actions">'
+        + '<button class="btn-edit" onclick="editFaq(\'' + cat + '\',' + i + ')">Modifier</button>'
+        + '<button class="btn-del" onclick="deleteFaq(\'' + cat + '\',' + i + ')">×</button>'
+        + '</div></div>';
+    }).join('');
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+function openFaqModal(cat, idx) {
+  document.getElementById('faq-modal-title').textContent = idx !== undefined ? 'Modifier la question' : 'Ajouter une question';
+  document.getElementById('faq-edit-idx').value = idx !== undefined ? idx : -1;
+  if (cat) document.getElementById('faq-cat').value = cat;
+  if (idx !== undefined && cat) {
+    var f = data.faq[cat][idx];
+    document.getElementById('faq-q').value = f.q;
+    document.getElementById('faq-a').value = f.a;
+  } else {
+    document.getElementById('faq-q').value = '';
+    document.getElementById('faq-a').value = '';
+  }
+  document.getElementById('faq-modal').classList.add('open');
+}
+function editFaq(cat, i) { openFaqModal(cat, i); }
+function deleteFaq(cat, i) {
+  if (!confirm('Supprimer cette question ?')) return;
+  data.faq[cat].splice(i, 1);
+  saveAll(); renderFAQ();
+}
+function saveFaq() {
+  var q = document.getElementById('faq-q').value.trim();
+  var a = document.getElementById('faq-a').value.trim();
+  if (!q||!a) { showToast('Question et réponse requises.', 'error'); return; }
+  var cat = document.getElementById('faq-cat').value;
+  var faqItem = {q: q, a: a};
+  var idx = parseInt(document.getElementById('faq-edit-idx').value);
+  if (!data.faq[cat]) data.faq[cat] = [];
+  if (idx >= 0) { data.faq[cat][idx] = faqItem; } else { data.faq[cat].push(faqItem); }
+  closeModal('faq-modal');
+  saveAll(); renderFAQ();
+}
+
+// ── INIT ──
+loadData();
+renderProds();
+
+// Responsive sidebar
+if (window.innerWidth <= 768) {
+  document.getElementById('sidebar').style.width = '0';
+  sidebarOpen = false;
+}
+</script>
+
+</div><!-- /admin-panel -->
+</body>
+</html>
