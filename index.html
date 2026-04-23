@@ -1280,8 +1280,11 @@ function makeACSVG(p, idx) {
 
 function makeProductCard(p, idx) {
   var promo = p.promo ? '<span class="prod-promo">' + p.promo + '</span>' : '';
+  var imgContent = p.photo && p.photo.length > 50
+    ? '<img src="' + p.photo + '" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0">'
+    : makeACSVG(p, idx);
   return '<div class="prod-card" data-tags="' + p.tags + '">'
-    + '<div class="prod-img-wrap">' + makeACSVG(p, idx)
+    + '<div class="prod-img-wrap" style="position:relative">' + imgContent
     + '<span class="prod-badge">' + p.badge + '</span>' + promo + '</div>'
     + '<div class="prod-body">'
     + '<div class="prod-brand">' + p.brand + '</div>'

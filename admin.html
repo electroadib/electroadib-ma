@@ -657,6 +657,15 @@ input:checked + .slider::before{transform:translateX(18px)}
         <input class="form-input" id="pm-promo" placeholder="Ex: -10%">
       </div>
     </div>
+    <div class="form-group">
+      <label class="form-label">Photo du produit (optionnel)</label>
+      <input type="file" accept="image/*" class="form-input" id="pm-photo-file" onchange="previewProdPhoto(this)" style="padding:8px;cursor:pointer">
+      <div id="pm-photo-preview-wrap" style="margin-top:8px;display:none">
+        <img id="pm-photo-prev" src="" style="width:80px;height:80px;object-fit:cover;border-radius:10px;border:1px solid rgba(212,175,55,.3)">
+        <button onclick="clearProdPhoto()" type="button" style="margin-left:8px;padding:4px 10px;border-radius:6px;background:rgba(197,48,48,.15);border:1px solid rgba(197,48,48,.3);color:#FC8181;font-size:.75rem;cursor:pointer">Supprimer</button>
+      </div>
+      <input type="hidden" id="pm-photo-data">
+    </div>
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Tags filtres</label>
@@ -1079,13 +1088,15 @@ function renderProds() {
   if (!data.produits.length) { list.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.84rem;text-align:center;padding:20px">Aucun produit. Ajoutez votre premier climatiseur.</p>'; return; }
   list.innerHTML = data.produits.map(function(p, i) {
     return '<div class="prod-item">'
+      + '<div style="display:flex;gap:10px;align-items:flex-start">'
+      + (p.photo ? '<img src="'+p.photo+'" style="width:50px;height:50px;object-fit:cover;border-radius:8px;border:1px solid rgba(212,175,55,.3);flex-shrink:0">' : '<div style="width:50px;height:50px;background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">❄️</div>')
       + '<div class="prod-item-info">'
       + '<div class="prod-item-brand">' + p.brand + '</div>'
       + '<div class="prod-item-name">' + p.name + '</div>'
       + '<div class="prod-item-meta"><span>' + p.btu + ' BTU</span><span style="color:#D4AF37;font-weight:700">' + p.price.toLocaleString() + ' DH</span>'
       + (p.promo ? '<span style="color:#FC8181">' + p.promo + '</span>' : '')
       + '</div>'
-      + '</div>'
+      + '</div></div>'
       + '<div class="prod-item-actions">'
       + '<button class="btn-edit" onclick="editProd(' + i + ')">Modifier</button>'
       + '<button class="btn-del" onclick="deleteProd(' + i + ')">×</button>'
@@ -1105,6 +1116,13 @@ function openProdModal(idx) {
     document.getElementById('pm-price').value = p.price;
     document.getElementById('pm-badge').value = p.badge;
     document.getElementById('pm-promo').value = p.promo || '';
+    document.getElementById('pm-photo-data').value = p.photo || '';
+    if (p.photo) {
+      document.getElementById('pm-photo-prev').src = p.photo;
+      document.getElementById('pm-photo-preview-wrap').style.display = 'block';
+    } else {
+      document.getElementById('pm-photo-preview-wrap').style.display = 'none';
+    }
     document.getElementById('tag-budget').checked = p.tags.indexOf('budget') >= 0;
     document.getElementById('tag-premium').checked = p.tags.indexOf('premium') >= 0;
     document.getElementById('pm-dispo').checked = p.dispo !== false;
@@ -1115,6 +1133,10 @@ function openProdModal(idx) {
     document.getElementById('pm-price').value = '';
     document.getElementById('pm-badge').value = 'POPULAIRE';
     document.getElementById('pm-promo').value = '';
+    document.getElementById('pm-photo-data').value = '';
+    document.getElementById('pm-photo-prev').src = '';
+    document.getElementById('pm-photo-preview-wrap').style.display = 'none';
+    document.getElementById('pm-photo-file').value = '';
     document.getElementById('tag-budget').checked = false;
     document.getElementById('tag-premium').checked = false;
     document.getElementById('pm-dispo').checked = true;
@@ -1143,7 +1165,8 @@ function saveProd() {
     badge: document.getElementById('pm-badge').value,
     promo: document.getElementById('pm-promo').value,
     tags: tags.trim(),
-    dispo: document.getElementById('pm-dispo').checked
+    dispo: document.getElementById('pm-dispo').checked,
+    photo: document.getElementById('pm-photo-data').value
   };
   var idx = parseInt(document.getElementById('prod-edit-idx').value);
   if (idx >= 0) { data.produits[idx] = prod; } else { data.produits.push(prod); }
@@ -1199,6 +1222,24 @@ function deleteTeam(i) {
   data.equipe.splice(i, 1);
   saveAll(); renderTeam();
 }
+
+function previewProdPhoto(inp) {
+  if (!inp.files || !inp.files[0]) return;
+  var r = new FileReader();
+  r.onload = function(e) {
+    document.getElementById('pm-photo-data').value = e.target.result;
+    document.getElementById('pm-photo-prev').src = e.target.result;
+    document.getElementById('pm-photo-preview-wrap').style.display = 'block';
+  };
+  r.readAsDataURL(inp.files[0]);
+}
+function clearProdPhoto() {
+  document.getElementById('pm-photo-data').value = '';
+  document.getElementById('pm-photo-prev').src = '';
+  document.getElementById('pm-photo-preview-wrap').style.display = 'none';
+  document.getElementById('pm-photo-file').value = '';
+}
+
 function previewTeamPhoto(inp) {
   if (!inp.files||!inp.files[0]) return;
   var r = new FileReader();
